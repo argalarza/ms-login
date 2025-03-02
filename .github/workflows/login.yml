@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # SAsegúrate de cambiar esto si usas otra rama principal
+      - main  # SAsegúrate de cambiar esto si usas otra rama principal.
 
 jobs:
   deploy:
