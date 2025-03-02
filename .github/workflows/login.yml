@@ -27,7 +27,10 @@ jobs:
           sudo yum update -y
           sudo yum install -y git
           sudo yum install -y docker
-          sudo amazon-linux-extras install docker-compose1.27 -y  # Usamos amazon-linux-extras para instalar una versión compatible de docker-compose
+
+          # Instalar Docker Compose manualmente
+          sudo curl -L https://github.com/docker/compose/releases/download/1.27.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
 
           # Iniciar Docker si no está corriendo
           sudo service docker start
@@ -39,9 +42,9 @@ jobs:
 
           echo "📦 Clonando o actualizando código fuente..."
           if [ -d "ms-login" ]; then
-            cd ms-login && git reset --hard && git pull origin master
+            cd ms-login && git reset --hard && git pull origin main
           else
-            git clone -b master https://github.com/argalarza/ms-login.git ms-login
+            git clone -b main https://github.com/argalarza/ms-login.git ms-login
             cd ms-login
           fi
 
