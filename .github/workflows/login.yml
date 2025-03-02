@@ -17,14 +17,14 @@ jobs:
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         script: |
           echo "🚀 Iniciando despliegue en EC2..."
 
           # Crear el directorio de la app si no existe
-          mkdir -p /home/${{ secrets.EC2_USER }}/ms-login
-          cd /home/${{ secrets.EC2_USER }}/ms-login
+          mkdir -p /home/${{ secrets.EC2_USERNAME }}/ms-login
+          cd /home/${{ secrets.EC2_USERNAME }}/ms-login
 
           echo "📦 Clonando o actualizando código fuente..."
           if [ -d "ms-login" ]; then
