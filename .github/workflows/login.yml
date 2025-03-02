@@ -30,25 +30,21 @@ jobs:
           sudo service docker start
           sudo usermod -a -G docker ec2-user
 
-          # 3. Verificar que Docker está corriendo 🐳
+          # 4. Verificar si Docker está corriendo 🐳
           echo "🐳 Verificando si Docker está corriendo..."
-          sudo systemctl status docker || sudo systemctl start docker
+          sudo systemctl is-active --quiet docker || sudo systemctl start docker
 
-          # 4. Detener y eliminar el contenedor anterior (si existe) ⛔
+          # 5. Detener y eliminar el contenedor anterior (si existe) ⛔
           echo "⛔ Deteniendo y eliminando contenedor anterior (si existe)..."
-          docker ps -q --filter "name=myapp" | grep -q . && docker stop myapp && docker rm myapp || echo "No hay contenedor anterior para eliminar."
+          docker ps -q --filter "name=myapp" | grep -q . && docker stop myapp && docker rm myapp || true
 
-          # 5. Construir la imagen Docker directamente en EC2 🔨
+          # 6. Construir la imagen Docker directamente en EC2 🔨
           echo "🔨 Construyendo la imagen Docker..."
           docker build -t myapp .
 
-          # 6. Ejecutar el contenedor con la nueva imagen 🏃‍♂️
+          # 7. Ejecutar el contenedor con la nueva imagen 🏃‍♂️
           echo "🏃‍♂️ Ejecutando el contenedor..."
           docker run -d -p 3000:3000 --name myapp myapp:latest
-
-          # 7. Verificar los logs del contenedor 🧑‍💻
-          echo "🧑‍💻 Verificando los logs del contenedor..."
-          docker logs myapp
 
           # 8. Mostrar el estado de los contenedores 🧑‍💻
           docker ps
