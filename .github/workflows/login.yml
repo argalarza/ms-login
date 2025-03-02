@@ -1,54 +1,56 @@
-name: 🚀 Deploy to EC2 (Amazon Linux) 🚀
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main  # Este flujo de trabajo se ejecutará cuando haya un push en la rama main
+      - master  # Asegúrate de cambiar esto si usas otra rama principal
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest  # Esto se ejecutará en una máquina Ubuntu, pero se desplegará en EC2
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout del código fuente 📥
-    - name: Checkout code 📥
-      uses: actions/checkout@v2
+    - name: 🚀 Checkout del código
+      uses: actions/checkout@v3
 
-    # 2. Acceder a la instancia EC2 y desplegar 🖥️
-    - name: Deploy to EC2 🚀
-      uses: appleboy/ssh-action@v0.1.8
+    - name: 🔑 Acceder a EC2 y desplegar
+      uses: appleboy/ssh-action@v0.1.5
       with:
-        host: ${{ secrets.EC2_HOST }}  # IP pública de tu EC2
-        username: ${{ secrets.EC2_USERNAME }}  # Nombre de usuario de EC2 (por lo general 'ec2-user' para Amazon Linux)
-        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # Tu clave privada SSH para acceder a EC2
-        port: 22
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-          # 3. Instalar Docker en EC2 si no está instalado 🐳
-          echo "🚀 Instalando Docker..."
-          sudo yum update -y
-          sudo yum install -y docker
-          sudo service docker start
-          sudo usermod -a -G docker ec2-user
+          echo "🚀 Iniciando despliegue en EC2..."
 
-          # 4. Detener y eliminar el contenedor anterior (si existe) ⛔
-          echo "⛔ Deteniendo y eliminando contenedor anterior (si existe)..."
-          docker ps -q --filter "name=login-service" | grep -q . && docker stop login-service && docker rm login-service || true
+          # Crear el directorio de la app si no existe
+          mkdir -p /home/${{ secrets.EC2_USER }}/ms-login
+          cd /home/${{ secrets.EC2_USER }}/ms-login
 
-          # 5. Construir la imagen Docker directamente en EC2 🔨
-          echo "🔨 Construyendo la imagen Docker..."
-          docker build -t login-service ./services/login  # Construye la imagen en EC2
+          echo "📦 Clonando o actualizando código fuente..."
+          if [ -d "ms-login" ]; then
+            cd ms-login && git reset --hard && git pull origin master
+          else
+            git clone -b master https://github.com/argalarza/ms-login.git ms-login
+            cd ms-login
+          fi
 
-          # 6. Ejecutar el contenedor con la nueva imagen 🏃‍♂️
-          echo "🏃‍♂️ Ejecutando el contenedor..."
-          docker run -d -p 3000:3000 \
-            -e DB_SOCKET_PATH=/cloudsql/lexical-task-452420-s2:us-central1:ms-login \
-            -e DB_HOST=${{ secrets.DB_HOST }} \
-            -e DB_PORT=${{ secrets.DB_PORT }} \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            --name login-service login-service:latest
+          echo "📑 Creando archivo .env en el servidor..."
+          cat <<EOF > .env
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          PORT=3000
+          EOF
 
-          # 7. Verificar que el contenedor está corriendo 🧑‍💻
-          docker ps
+          echo "🛠️ Construyendo y levantando los contenedores..."
+          docker-compose -f docker-compose.prod.yml down --remove-orphans
+          docker-compose -f docker-compose.prod.yml up --build -d
+
+          echo "🔍 Verificando que el servicio está corriendo..."
+          docker ps | grep ms-login || { echo "⚠️ ERROR: El contenedor no se inició correctamente."; exit 1; }
+
+          echo "✅ Despliegue completado exitosamente."
