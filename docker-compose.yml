@@ -4,11 +4,22 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DB_SOCKET_PATH=/cloudsql/lexical-task-452420-s2:us-central1:ms-login
-      - DB_HOST=${DB_HOST}            # Dirección IP de Google Cloud SQL
-      - DB_PORT=${DB_PORT}            # Puerto de MySQL
-      - DB_USER=${DB_USER}            # Usuario de la base de datos
-      - DB_PASSWORD=${DB_PASSWORD}    # Contraseña de la base de datos
-      - DB_NAME=${DB_NAME}            # Nombre de la base de datos
-      - JWT_SECRET=${JWT_SECRET}      # Clave secreta para JWT
-    restart: unless-stopped  # Asegura que el contenedor se reinicie si falla
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+  register-service:
+    build: ./services/register_user
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    restart: unless-stopped
