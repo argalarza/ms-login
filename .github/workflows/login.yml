@@ -22,6 +22,17 @@ jobs:
         script: |
           echo "🚀 Iniciando despliegue en EC2..."
 
+          # Instalar git, docker y docker-compose si no están instalados
+          echo "🔧 Instalando dependencias necesarias..."
+          sudo yum update -y
+          sudo yum install -y git
+          sudo yum install -y docker
+          sudo amazon-linux-extras install docker-compose1.27 -y  # Usamos amazon-linux-extras para instalar una versión compatible de docker-compose
+
+          # Iniciar Docker si no está corriendo
+          sudo service docker start
+          sudo systemctl enable docker
+
           # Crear el directorio de la app si no existe
           mkdir -p /home/${{ secrets.EC2_USERNAME }}/ms-login
           cd /home/${{ secrets.EC2_USERNAME }}/ms-login
@@ -46,10 +57,10 @@ jobs:
           EOF
 
           echo "🛠️ Construyendo y levantando los contenedores..."
-          docker-compose -f docker-compose.prod.yml down --remove-orphans
-          docker-compose -f docker-compose.prod.yml up --build -d
+          sudo docker-compose -f docker-compose.prod.yml down --remove-orphans
+          sudo docker-compose -f docker-compose.prod.yml up --build -d
 
           echo "🔍 Verificando que el servicio está corriendo..."
-          docker ps | grep ms-login || { echo "⚠️ ERROR: El contenedor no se inició correctamente."; exit 1; }
+          sudo docker ps | grep ms-login || { echo "⚠️ ERROR: El contenedor no se inició correctamente."; exit 1; }
 
           echo "✅ Despliegue completado exitosamente."
