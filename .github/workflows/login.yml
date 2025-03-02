@@ -36,7 +36,7 @@ jobs:
 
           # 5. Construir la imagen Docker directamente en EC2 🔨
           echo "🔨 Construyendo la imagen Docker..."
-          docker build -t login-service ../services/login  # Construye la imagen en EC2
+          docker build -t login-service ./services/login  # Construye la imagen en EC2
 
           # 6. Ejecutar el contenedor con la nueva imagen 🏃‍♂️
           echo "🏃‍♂️ Ejecutando el contenedor..."
