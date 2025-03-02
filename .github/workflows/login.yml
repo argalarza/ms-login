@@ -60,8 +60,9 @@ jobs:
           EOF
 
           echo "🛠️ Construyendo y levantando los contenedores..."
-          sudo docker-compose -f docker-compose.prod.yml down --remove-orphans
-          sudo docker-compose -f docker-compose.prod.yml up --build -d
+          sudo docker-compose -f /home/ec2-user/ms-login/ms-login/docker-compose.yml down --remove-orphans
+          sudo docker-compose -f /home/ec2-user/ms-login/ms-login/docker-compose.yml up --build -d
+
 
           echo "🔍 Verificando que el servicio está corriendo..."
           sudo docker ps | grep ms-login || { echo "⚠️ ERROR: El contenedor no se inició correctamente."; exit 1; }
