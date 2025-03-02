@@ -1,0 +1,46 @@
+name: 🚀 Deploy to AWS EC2 (Directly from GitHub) 🚀
+
+on:
+  push:
+    branches:
+      - main  # Este workflow se ejecutará cuando haya un push en la rama main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout del código fuente 📥
+    - name: Checkout code 📥
+      uses: actions/checkout@v2
+
+    # 2. Acceder a la instancia EC2 y desplegar 🖥️
+    - name: Deploy to EC2 🚀
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}  # IP pública de tu EC2
+        username: ${{ secrets.EC2_USERNAME }}  # Nombre de usuario de EC2 (por lo general 'ec2-user')
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # Tu clave privada SSH para acceder a EC2
+        port: 22
+        script: |
+          # 3. Instalar Docker en EC2 si no está instalado (solo para Amazon Linux) 🐳
+          echo "🚀 Instalando Docker..."
+          sudo yum update -y
+          sudo yum install -y docker
+          sudo service docker start
+          sudo usermod -a -G docker ec2-user
+
+          # 4. Detener y eliminar el contenedor anterior (si existe) ⛔
+          echo "⛔ Deteniendo y eliminando contenedor anterior (si existe)..."
+          docker ps -q --filter "name=myapp" | grep -q . && docker stop myapp && docker rm myapp || true
+
+          # 5. Construir la imagen Docker directamente en EC2 🔨
+          echo "🔨 Construyendo la imagen Docker..."
+          docker build -t myapp .
+
+          # 6. Ejecutar el contenedor con la nueva imagen 🏃‍♂️
+          echo "🏃‍♂️ Ejecutando el contenedor..."
+          docker run -d -p 3000:3000 --name myapp myapp:latest
+
+          # 7. Mostrar el estado de los contenedores 🧑‍💻
+          docker ps
