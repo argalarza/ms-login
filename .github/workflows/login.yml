@@ -21,7 +21,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}  # IP pública de tu EC2
         username: ${{ secrets.EC2_USERNAME }}  # Nombre de usuario de EC2 (por lo general 'ec2-user' para Amazon Linux)
         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # Tu clave privada SSH para acceder a EC2
-        port: 3000
+        port: 22
         script: |
           # 3. Instalar Docker en EC2 si no está instalado 🐳
           echo "🚀 Instalando Docker..."
