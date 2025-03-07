@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # SAsegúrate de cambiar esto si usas otra rama principal.
+      - main  # Asegúrate de cambiar esto si usas otra rama principal.
 
 jobs:
   deploy:
@@ -22,32 +22,54 @@ jobs:
         script: |
           echo "🚀 Iniciando despliegue en EC2..."
 
-          # Instalar git, docker y docker-compose si no están instalados
+          # Actualizar paquetes
           echo "🔧 Instalando dependencias necesarias..."
           sudo yum update -y
-          sudo yum install -y git
-          sudo yum install -y docker
 
-          # Instalar Docker Compose manualmente
-          sudo curl -L https://github.com/docker/compose/releases/download/1.27.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+          # Instalar git si no está instalado
+          if ! command -v git &> /dev/null; then
+            sudo yum install -y git
+          fi
+
+          # Instalar Docker si no está instalado
+          if ! command -v docker &> /dev/null; then
+            sudo yum install -y docker
+            sudo systemctl enable docker
+          fi
 
           # Iniciar Docker si no está corriendo
-          sudo service docker start
-          sudo systemctl enable docker
+          if ! systemctl is-active --quiet docker; then
+            sudo service docker start
+          fi
 
-          # Crear el directorio de la app si no existe
-          mkdir -p /home/${{ secrets.EC2_USERNAME }}/ms-login
-          cd /home/${{ secrets.EC2_USERNAME }}/ms-login
+          # Instalar Docker Compose si no está instalado
+          if ! command -v docker-compose &> /dev/null; then
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
 
+          # Crear la red de Docker si no existe
+          if ! sudo docker network ls | grep -q "my_global_network"; then
+            sudo docker network create my_global_network
+          fi
+
+          # Crear directorio de la app si no existe
+          APP_DIR="/home/${{ secrets.EC2_USERNAME }}/ms-login"
+          mkdir -p $APP_DIR
+          cd $APP_DIR
+
+          # Clonar o actualizar el código fuente
           echo "📦 Clonando o actualizando código fuente..."
           if [ -d "ms-login" ]; then
-            cd ms-login && git reset --hard && git pull origin main
+            cd ms-login
+            git reset --hard
+            git pull origin main
           else
             git clone -b main https://github.com/argalarza/ms-login.git ms-login
             cd ms-login
           fi
 
+          # Crear archivo .env
           echo "📑 Creando archivo .env en el servidor..."
           cat <<EOF > .env
           DB_HOST=${{ secrets.DB_HOST }}
@@ -59,12 +81,21 @@ jobs:
           PORT=3000
           EOF
 
+          # Detener contenedores existentes de forma segura
+          echo "🛑 Deteniendo contenedores antiguos..."
+          if sudo docker ps | grep -q ms-login; then
+            sudo docker-compose -f docker-compose.yml down --remove-orphans
+          fi
+
+          # Construir y levantar los contenedores
           echo "🛠️ Construyendo y levantando los contenedores..."
-          sudo docker-compose -f /home/ec2-user/ms-login/ms-login/docker-compose.yml down --remove-orphans
-          sudo docker-compose -f /home/ec2-user/ms-login/ms-login/docker-compose.yml up --build -d
+          sudo docker-compose -f docker-compose.yml up --build -d
 
-
+          # Verificar que el contenedor está corriendo
           echo "🔍 Verificando que el servicio está corriendo..."
-          sudo docker ps | grep ms-login || { echo "⚠️ ERROR: El contenedor no se inició correctamente."; exit 1; }
+          if ! sudo docker ps | grep -q ms-login; then
+            echo "⚠️ ERROR: El contenedor no se inició correctamente."
+            exit 1
+          fi
 
           echo "✅ Despliegue completado exitosamente."
