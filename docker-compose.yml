@@ -10,5 +10,10 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - my_global_network  # Conectamos a la red externa
     restart: unless-stopped
 
+networks:
+  my_global_network:
+    external: true  # Usamos la red creada manualmente
