@@ -8,7 +8,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Ruta de login
+
 app.post('/login', loginUser);
 
 app.listen(PORT, () => {

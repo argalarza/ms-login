@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
-const { getUserByUsername } = require('../models/user'); // Asegúrate de que la ruta sea correcta
-
+const { getUserByUsername } = require('../models/user'); 
 const loginUser = async (req, res) => {
   const { username, password, captcha } = req.body;
 

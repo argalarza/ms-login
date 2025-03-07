@@ -18,7 +18,7 @@ db.connect((err) => {
   }
 });
 
-// Función para obtener usuario por username
+
 const getUserByUsername = (username) => {
   return new Promise((resolve, reject) => {
     db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
